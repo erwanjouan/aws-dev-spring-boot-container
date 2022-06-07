@@ -1,0 +1,40 @@
+version: 0.2
+# https://docs.aws.amazon.com/codepipeline/latest/userguide/ecs-cd-pipeline.html
+env:
+  git-credential-helper: yes
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login --no-include-email --region eu-west-1 | sh
+      - REPOSITORY_URI=467420073914.dkr.ecr.eu-west-1.amazonaws.com/$PROJECT_NAME
+      - git submodule update --init --recursive
+      - echo IMAGE_TAG $IMAGE_TAG
+      - git fetch && git checkout $IMAGE_TAG
+  build:
+    commands:
+      - echo Build started on $(date)
+      - echo Building the Docker image...
+      - mvn spring-boot:build-image
+      - docker tag $PROJECT_NAME:$PROJECT_VERSION $REPOSITORY_URI:$IMAGE_TAG
+      - docker tag $PROJECT_NAME:$PROJECT_VERSION $REPOSITORY_URI:latest
+      - echo Pushing the Docker images...
+      - echo REPOSITORY_URI $REPOSITORY_URI
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - mkdir latest
+      - mkdir $IMAGE_TAG
+      - cp pipeline/Dockerrun.aws.json latest/Dockerrun.aws.json
+      - cp pipeline/Dockerrun.aws.json $IMAGE_TAG/Dockerrun.aws.json
+
+artifacts:
+  files:
+    - latest/Dockerrun.aws.json
+    - $IMAGE_TAG/Dockerrun.aws.json
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
