@@ -26,7 +26,7 @@ phases:
   post_build:
     commands:
       - mkdir latest && cp pipeline/Dockerrun.aws.json latest/Dockerrun.aws.json
-      - mkdir $IMAGE_TAG && sed -e "s/latest/$IMAGE_TAG/g" pipeline/Dockerrun.aws.json $IMAGE_TAG/Dockerrun.aws.json
+      - mkdir $IMAGE_TAG && sed -e "s/latest/$IMAGE_TAG/g" pipeline/Dockerrun.aws.json > $IMAGE_TAG/Dockerrun.aws.json
 
 artifacts:
   files:
